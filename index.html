@@ -1,9 +1,62 @@
 <html>
-  <script src='https://d3js.org/d3.v5.min.js'></script>
-<style> circle {fill: lightblue; stroke: black;} </style>
-  <body>
-    <svg width=300 height=300>
-    </svg>
-    <h1> This is my project</h1>
-  </body>
+    <head>
+        <script src='https://d3js.org/d3.v5.min.js'></script>
+        <style> circle {fill: lightblue; stroke: black;} </style>
+    </head>
+    
+    <body onload='init()'>
+        <svg width=300 height=300 class ="vis"> 
+        </svg>
+        
+        <script>
+            const margin = 50;
+            const width = 300 - 2* margin ;
+            const height = 300 - 2* margin ;
+            xdomain = [10,150];
+            xrange = [0,width];
+            ydomain = [10,150];
+            yrange = [height,0];
+            cdomain = [0,1];
+            crange = [0,1];
+            xs = d3.scaleLog().domain(xdomain).range(xrange);
+            ys = d3.scaleLog().domain(ydomain).range(yrange);
+            cs = d3.scaleLinear().domain(cdomain).range(crange);
+
+            const xAxis = d3.axisBottom(xs)
+                .tickValues([10, 20, 50, 100])
+                .tickFormat(d3.format("~s"));
+            const yAxis = d3.axisLeft(ys)
+                .tickValues([10, 20, 50, 100])
+                .tickFormat(d3.format("~s"));
+
+            
+        async function init() {
+            
+            const data = await d3.csv('https://flunky.github.io/cars2017.csv');
+            console.log(data);
+
+            const svg = d3.select(".vis")
+                .attr("width", width + 2 * margin)
+                .attr("height", height + 2* margin)
+                .append("g")
+                .attr("transform", `translate(${margin},${margin})`);
+
+            
+                svg.selectAll("circle")
+                .data(data)
+                .enter()
+                .append("circle")
+                .attr("cx", function(d){return xs(parseInt(d.AverageCityMPG));})
+                .attr("cy", function(d){return ys(parseInt(d.AverageHighwayMPG));})
+                .attr("r", function(d){return 2+ parseInt(d.EngineCylinders)});
+
+                svg.append("g")
+                .call(yAxis);
+
+                svg.append("g")
+                .attr("transform", `translate(0,${height})`)
+                .call(xAxis);
+        }
+        </script>
+    </body>
 </html>
