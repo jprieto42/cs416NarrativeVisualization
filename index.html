@@ -1,17 +1,25 @@
 <html>
     <head>
         <script src='https://d3js.org/d3.v5.min.js'></script>
-        <style> circle {fill: lightblue; stroke: black;} </style>
+        <script src='https://cdnjs.cloudflare.com/ajax/libs/d3-annotation/2.5.1/d3-annotation.min.js'></script>
+        <style> circle {fill: lightblue; stroke: black;} 
+            .axis-label { font-size: 12px; text-anchor: middle; }
+            .chart-title { text-anchor: end; font-size: 18px; }
+        </style>
     </head>
     
     <body onload='init()'>
+        <h1>What type of vehical is the most fuel efficient?</h1>
+        <p> Take a look at data from a survey conducted in 2017 with varois different types of vehicles.</p>
+        
         <svg width=300 height=300 class ="vis"> 
         </svg>
-        
+        <p class="button-text">Click next to show Diesel Fueled </p>
+        <button id="updateButton">Next</button>
         <script>
             const margin = 50;
-            const width = 300 - 2* margin ;
-            const height = 300 - 2* margin ;
+            const width = 600 - 2* margin ;
+            const height = 600 - 2* margin ;
             xdomain = [10,150];
             xrange = [0,width];
             ydomain = [10,150];
@@ -21,6 +29,7 @@
             xs = d3.scaleLog().domain(xdomain).range(xrange);
             ys = d3.scaleLog().domain(ydomain).range(yrange);
             cs = d3.scaleLinear().domain(cdomain).range(crange);
+            var scene= 1;
 
             const xAxis = d3.axisBottom(xs)
                 .tickValues([10, 20, 50, 100])
@@ -48,7 +57,7 @@
                 .append("circle")
                 .attr("cx", function(d){return xs(parseInt(d.AverageCityMPG));})
                 .attr("cy", function(d){return ys(parseInt(d.AverageHighwayMPG));})
-                .attr("r", function(d){return 2+ parseInt(d.EngineCylinders)});
+                .attr("r", 2);
 
                 svg.append("g")
                 .call(yAxis);
@@ -56,7 +65,170 @@
                 svg.append("g")
                 .attr("transform", `translate(0,${height})`)
                 .call(xAxis);
+
+                svg.append("text")
+                .attr("class", "axis-label")
+                .attr("x", (width -  margin) / 2)
+                .attr("y", height +margin )
+                .text("Average City MPG");
+
+                svg.append("text")
+                .attr("class", "axis-label")
+                .attr("transform", "rotate(-90)")
+                .attr("x", -height / 2)
+                .attr("y", -margin + 15)
+                .text("Average Highway MPG");
+
+                svg.append("text")
+                .attr("class", "chart-title")
+                .attr("x", width-margin)
+                .attr("y", -margin / 2)
+                .text("Average Highway MPG vs Average City MPG");
+
+                d3.select("#updateButton").on("click", function() {
+                updateGraph(svg, data);
+            });
+
+            
         }
+        
+
+        function updateGraph(svg, data) {
+            // Example update: filter data to show only cars with more than 6 cylinders
+            var filteredData;
+            var buttonText;
+            if(scene===1){
+                filteredData = data.filter(function(d){return d.Fuel==='Diesel';});
+                buttonText = "Click next to show Gasoline vehical data"
+            }
+            else if(scene ===2){
+                filteredData = data.filter(function(d){return d.Fuel==='Gasoline';});
+                buttonText = "Click next to show Electric vehical data"
+            }
+            else if(scene ===3){
+                filteredData = data.filter(function(d){return d.Fuel==='Electricity';});
+                buttonText = "Click next to Explore data"
+            }
+            else{
+                buttonText = "Explore data"
+                filteredData =  data;
+            }
+            
+            
+            // Redraw the graph with the filtered data
+            drawGraph(svg, filteredData);
+            scene += 1;
+            console.log(scene);
+            d3.select(".button-text").text(buttonText);
+
+            if (scene > 4) {
+                d3.select("#updateButton").attr("disabled", true);
+            }
+
+        }
+
+        function drawGraph(svg, data) {
+            // Clear previous elements
+            var annotations;
+            svg.selectAll("*").remove();
+
+            // Add circles
+            svg.selectAll("circle")
+                .data(data)
+                .enter()
+                .append("circle")
+                .attr("cx", function(d){return xs(parseInt(d.AverageCityMPG));})
+                .attr("cy", function(d){return ys(parseInt(d.AverageHighwayMPG));})
+                .attr("r", 2);
+
+            // Add X Axis
+            svg.selectAll("circle")
+                .data(data)
+                .enter()
+                .append("circle")
+                .attr("cx", function(d){return xs(parseInt(d.AverageCityMPG));})
+                .attr("cy", function(d){return ys(parseInt(d.AverageHighwayMPG));})
+                .attr("r", 2);
+
+                svg.append("g")
+                .call(yAxis);
+
+                svg.append("g")
+                .attr("transform", `translate(0,${height})`)
+                .call(xAxis);
+
+                svg.append("text")
+                .attr("class", "axis-label")
+                .attr("x", (width -  margin) / 2)
+                .attr("y", height +margin )
+                .text("Average City MPG");
+
+                svg.append("text")
+                .attr("class", "axis-label")
+                .attr("transform", "rotate(-90)")
+                .attr("x", -height / 2)
+                .attr("y", -margin + 15)
+                .text("Average Highway MPG");
+
+                svg.append("text")
+                .attr("class", "chart-title")
+                .attr("x", width-margin)
+                .attr("y", -margin / 2)
+                .text("Average Highway MPG vs Average City MPG");
+
+
+            if(scene===1){
+                annotations = [
+                {
+                    note: { label: "Notice the MPG for diesel vehicles is around the middle", title: "Diesel" },
+                    x: xs(30),
+                    y: ys(30),
+                    dy: height - ys(30) - 3* margin ,
+                    dx: width - xs(30) - 2* margin ,
+                }
+            ];
+            }
+            else if(scene ===2){
+                annotations = [
+                {
+                    note: { label: "Notice the MPG for gasoline vehicals is spread between the low end and the middle", title: "Gasoline" },
+                    x: xs(30),
+                    y: ys(25),
+                    dy: height - ys(25) - 3* margin ,
+                    dx: width - xs(30) - 2* margin ,
+                }
+            ];
+            }
+            else if(scene ===3){
+                annotations = [
+                {
+                    note: { label: "Notice the MPG for Electric vehicals is at the higher end", title: "Electricity" },
+                    x: xs(120),
+                    y: ys(80),
+                    dy: height - ys(80) - 3* margin ,
+                    dx: width - xs(120) - 2* margin ,
+                }
+            ];
+            }
+            else{
+                annotations = [
+                {
+                    
+                }
+            ];
+            }
+            // Define annotations
+            
+
+            // Add annotations to the SVG
+            var makeAnnotations = d3.annotation()
+                .annotations(annotations);
+
+            svg.append("g")
+                .attr("class", "annotation-group")
+                .call(makeAnnotations);
+       
+        }        
         </script>
     </body>
 </html>
